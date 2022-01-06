@@ -1,0 +1,1354 @@
+"""
+CASE: BANKOMAT
+Developers:
+Yudachev N.
+PIN = 1234
+"""
+
+import tkinter as tk
+import time
+from PIL import Image
+import random
+
+current_balance = random.randrange(1000, 10000)
+c = 0
+v = 0
+
+
+class SampleApp(tk.Tk):
+
+    def __init__(self, *args, **kwargs):
+        tk.Tk.__init__(self, *args, **kwargs)
+
+        self.shared_data = {'Balance': tk.IntVar()}
+
+        container = tk.Frame(self)
+        container.pack(side="top", fill="both", expand=True)
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
+
+        self.frames = {}
+        for F in (
+                BeginningPage, Card_Reception, StartPage, MenuPage, WithdrawPage, DepositPage, BalancePage, Lack,
+                WithdrawPageSam, Card_Output, FinalPage):
+            page_name = F.__name__
+            frame = F(parent=container, controller=self)
+            self.frames[page_name] = frame
+            frame.grid(row=0, column=0, sticky="nsew")
+
+        self.show_frame("BeginningPage")
+
+    def show_frame(self, page_name):
+        """Show a frame for the given page name"""
+        frame = self.frames[page_name]
+        frame.tkraise()
+
+
+class BeginningPage(tk.Frame):
+    def __init__(self, parent, controller):
+        """
+
+        :param parent:
+        :param controller:
+        """
+        tk.Frame.__init__(self, parent, bg='#9999ff')
+        self.controller = controller
+
+        heading_label = tk.Label(self,
+                                 text='Банкомат',
+                                 font=('Arial', 45, 'bold'),
+                                 foreground='#ffffff',
+                                 background='#9999ff')
+        heading_label.pack(pady=30)
+
+        space_label = tk.Label(self, height=5, bg='#9999ff')
+        space_label.pack()
+
+        def activate():
+            controller.show_frame('Card_Reception')
+
+        activate_button = tk.Button(self,
+                                    text='Активировать банкомат',
+                                    font=('Arial', 15, 'bold'),
+                                    command=activate,
+                                    relief='raised',
+                                    borderwidth=5,
+                                    width=40,
+                                    height=3)
+        activate_button.pack(pady=10)
+
+        incorrect_password_label = tk.Label(self,
+                                            text='',
+                                            font=('Arial', 13),
+                                            fg='white',
+                                            bg='#33334d',
+                                            anchor='n')
+        incorrect_password_label.pack(fill='both', expand=True)
+
+        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
+        bottom_frame.pack(fill='x', side='bottom')
+
+        visa_photo = tk.PhotoImage(file='visa.png')
+        visa_label = tk.Label(bottom_frame, image=visa_photo)
+        visa_label.pack(side='left')
+        visa_label.image = visa_photo
+
+        mastercard_photo = tk.PhotoImage(file='mastercard.png')
+        mastercard_label = tk.Label(bottom_frame, image=mastercard_photo)
+        mastercard_label.pack(side='left')
+        mastercard_label.image = mastercard_photo
+
+        def tick():
+            current_time = time.strftime('%I:%M %p').lstrip('0').replace(' 0', ' ')
+            time_label.config(text=current_time)
+            time_label.after(200, tick)
+
+        time_label = tk.Label(bottom_frame, font=('Arial', 12))
+        time_label.pack(side='right')
+
+        tick()
+
+
+class Card_Reception(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg='#9999ff')
+        self.controller = controller
+
+        heading_label = tk.Label(self,
+                                 text='Банкомат активирован',
+                                 font=('Arial', 45, 'bold'),
+                                 foreground='#ffffff',
+                                 background='#9999ff')
+        heading_label.pack(pady=30)
+
+        space_label = tk.Label(self, height=5, bg='#9999ff')
+        space_label.pack()
+
+        def activate():
+            global c
+            file = "credit_card (1).gif"
+            info = Image.open(file)
+            frames = info.n_frames
+            im = [tk.PhotoImage(file=file, format=f"gif -index {i}") for i in range(100, frames - 1)]
+
+            count = 0
+            anim = None
+
+            def animation(count):
+                global anim
+                im2 = im[count]
+
+                gif_label.configure(image=im2)
+                count += 1
+                anim = incorrect_password_label.after(50, lambda: animation(count))
+                if count == 46:
+                    incorrect_password_label.after_cancel(anim)
+
+            gif_label = tk.Label(incorrect_password_label, image="")
+            gif_label.pack()
+            animation(count)
+
+            activate_button['text'] = 'Продолжить'
+            heading_label['text'] = 'Карта вставлена в банкомат'
+            c += 1
+            if c == 2:
+                nexti()
+                c = 0
+
+        def nexti():
+            controller.show_frame('StartPage')
+
+        activate_button = tk.Button(self,
+                                    text='Вставить карту',
+                                    font=('Arial', 15, 'bold'),
+                                    command=activate,
+                                    relief='raised',
+                                    borderwidth=5,
+                                    width=40,
+                                    height=3)
+        activate_button.pack(pady=10)
+
+        card_photo = tk.PhotoImage(file='credit_card (1).gif')
+
+        incorrect_password_label = tk.Label(self,
+                                            text='',
+                                            font=('Arial', 13),
+                                            fg='white',
+                                            bg='#33334d',
+                                            anchor='n',
+                                            image=card_photo)
+        incorrect_password_label.pack(fill='both', expand=True)
+        incorrect_password_label.image = card_photo
+
+        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
+        bottom_frame.pack(fill='x', side='bottom')
+
+        visa_photo = tk.PhotoImage(file='visa.png')
+        visa_label = tk.Label(bottom_frame, image=visa_photo)
+        visa_label.pack(side='left')
+        visa_label.image = visa_photo
+
+        mastercard_photo = tk.PhotoImage(file='mastercard.png')
+        mastercard_label = tk.Label(bottom_frame, image=mastercard_photo)
+        mastercard_label.pack(side='left')
+        mastercard_label.image = mastercard_photo
+
+        def tick():
+            current_time = time.strftime('%I:%M %p').lstrip('0').replace(' 0', ' ')
+            time_label.config(text=current_time)
+            time_label.after(200, tick)
+
+        time_label = tk.Label(bottom_frame, font=('Arial', 12))
+        time_label.pack(side='right')
+
+        tick()
+
+
+class Card_Output(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg='#9999ff')
+        self.controller = controller
+
+        heading_label = tk.Label(self,
+                                 text='Выход из Банкомата',
+                                 font=('Arial', 45, 'bold'),
+                                 foreground='#ffffff',
+                                 background='#9999ff')
+        heading_label.pack(pady=30)
+
+        space_label = tk.Label(self, height=5, bg='#9999ff')
+        space_label.pack()
+
+        def activate():
+            global v
+            file = "credit_card (1).gif"
+            info = Image.open(file)
+            frames = info.n_frames
+            im = [tk.PhotoImage(file=file, format=f"gif -index {i}") for i in range(0, 46)]
+
+            count = 0
+            anim = None
+
+            def animation(count):
+                global anim
+                im2 = im[count]
+
+                gif_label.configure(image=im2)
+                count += 1
+                anim = incorrect_password_label.after(50, lambda: animation(count))
+                if count == 46:
+                    incorrect_password_label.after_cancel(anim)
+
+            gif_label = tk.Label(incorrect_password_label, image="")
+            gif_label.pack()
+            animation(count)
+
+            activate_button['text'] = 'Забрать карту'
+            heading_label['text'] = 'Заберите карту'
+            v += 1
+            if v == 2:
+                nexti()
+
+        def nexti():
+            controller.show_frame('FinalPage')
+
+        activate_button = tk.Button(self,
+                                    text='Получить карту',
+                                    font=('Arial', 15, 'bold'),
+                                    command=activate,
+                                    relief='raised',
+                                    borderwidth=5,
+                                    width=40,
+                                    height=3)
+        activate_button.pack(pady=10)
+
+        card_photo = tk.PhotoImage(file='credit_card (1).gif')
+
+        incorrect_password_label = tk.Label(self,
+                                            text='',
+                                            font=('Arial', 13),
+                                            fg='white',
+                                            bg='#33334d',
+                                            anchor='n',
+                                            image=card_photo)
+        incorrect_password_label.pack(fill='both', expand=True)
+        incorrect_password_label.image = card_photo
+
+        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
+        bottom_frame.pack(fill='x', side='bottom')
+
+        visa_photo = tk.PhotoImage(file='visa.png')
+        visa_label = tk.Label(bottom_frame, image=visa_photo)
+        visa_label.pack(side='left')
+        visa_label.image = visa_photo
+
+        mastercard_photo = tk.PhotoImage(file='mastercard.png')
+        mastercard_label = tk.Label(bottom_frame, image=mastercard_photo)
+        mastercard_label.pack(side='left')
+        mastercard_label.image = mastercard_photo
+
+        def tick():
+            current_time = time.strftime('%I:%M %p').lstrip('0').replace(' 0', ' ')
+            time_label.config(text=current_time)
+            time_label.after(200, tick)
+
+        time_label = tk.Label(bottom_frame, font=('Arial', 12))
+        time_label.pack(side='right')
+
+        tick()
+
+
+class StartPage(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg='#9999ff')
+        self.controller = controller
+
+        self.controller.title('Банкомат')
+        self.controller.state('zoomed')
+        self.controller.iconphoto(False, tk.PhotoImage(file='C:/Users/Пользователь/Desktop/pythonProject/atm.png'))
+
+        heading_label = tk.Label(self,
+                                 text='Карта вставлена',
+                                 font=('Arial', 45, 'bold'),
+                                 foreground='#ffffff',
+                                 background='#9999ff')
+        heading_label.pack(pady=30)
+
+        space_label = tk.Label(self, height=5, bg='#9999ff')
+        space_label.pack()
+
+        password_label = tk.Label(self,
+                                  text='Введите свой пароль',
+                                  font=('Arial', 15),
+                                  bg='#9999ff',
+                                  fg='white')
+        password_label.pack(pady=10)
+
+        my_password = tk.StringVar()
+        password_entry_box = tk.Entry(self,
+                                      textvariable=my_password,
+                                      font=('Arial', 15),
+                                      width=22)
+        password_entry_box.focus_set()
+        password_entry_box.pack(ipady=7)
+
+        def handle_focus_in(_):
+            password_entry_box.configure(fg='black', show='*')
+
+        password_entry_box.bind('<FocusIn>', handle_focus_in)
+
+        def check_password():
+            if my_password.get() == '1234':
+                my_password.set('')
+                incorrect_password_label['text'] = ''
+                controller.show_frame('MenuPage')
+            elif my_password.get() == '':
+                incorrect_password_label['text'] = 'Введите пожалуйста пароль, прежде чем нажимать на ENTER'
+            else:
+                incorrect_password_label['text'] = 'Неверный пароль, попробуйте еще раз'
+
+        def clear():
+            incorrect_password_label['text'] = ''
+            password_entry_box.delete(len(password_entry_box.get()) - 1)
+
+        enter_button = tk.Label(self,
+                                text='',
+                                width=40,
+                                height=3,
+                                bg='#9999ff')
+        enter_button.pack(pady=10)
+
+        incorrect_password_label = tk.Label(self,
+                                            text='',
+                                            font=('Arial', 13),
+                                            fg='white',
+                                            bg='#33334d',
+                                            anchor='n')
+        incorrect_password_label.pack(fill='both', expand=True)
+
+        incorrect_password_label1 = tk.Label(self,
+                                             font=('Arial', 13),
+                                             fg='white',
+                                             bg='#33334d',
+                                             anchor='n')
+        incorrect_password_label1.pack(fill='both', expand=True)
+
+        bf = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf.pack(side='bottom')
+
+        bf4 = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf4.pack(side='bottom')
+
+        bf3 = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf3.pack(side='bottom')
+
+        bf2 = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf2.pack(side='bottom')
+
+        bf1 = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf1.pack(side='bottom')
+
+        b1 = tk.Button(bf1, text='  1  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '1'))
+        b1.pack(side='left', pady=10)
+        b2 = tk.Button(bf1, text='  2  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '2'))
+        b2.pack(side='left', padx=10)
+        b3 = tk.Button(bf1, text='  3  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '3'))
+        b3.pack(side='left')
+
+        b4 = tk.Button(bf2, text='  4  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '4'))
+        b4.pack(side='left', pady=10)
+        b5 = tk.Button(bf2, text='  5  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '5'))
+        b5.pack(side='left', padx=10)
+        b6 = tk.Button(bf2, text='  6  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '6'))
+        b6.pack(side='left')
+
+        b7 = tk.Button(bf3, text='  7  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '7'))
+        b7.pack(side='left', pady=10)
+        b8 = tk.Button(bf3, text='  8  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '8'))
+        b8.pack(side='left', padx=10)
+        b9 = tk.Button(bf3, text='  9  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '9'))
+        b9.pack(side='left')
+
+        b = tk.Button(bf4, text='      ', font=('Arial', 15), relief='raised', borderwidth=5)
+        b.pack(side='left', pady=10)
+        b0 = tk.Button(bf4, text='  0  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '0'))
+        b0.pack(side='left', padx=10)
+        b = tk.Button(bf4, text='      ', font=('Arial', 15), relief='raised', borderwidth=5)
+        b.pack(side='left')
+
+        def cancel():
+            controller.show_frame('Card_Output')
+
+        cancel_btn = tk.Button(bf, text='CANCEL', bg='red', font=('Arial', 15), relief='raised', borderwidth=5,
+                               command=cancel)
+        cancel_btn.pack(side='left', padx=10)
+        clear_btn = tk.Button(bf, text='CLEAR ', bg='yellow', font=('Arial', 15), relief='raised', borderwidth=5,
+                              command=clear)
+        clear_btn.pack(side='left', padx=10)
+        enter_btn = tk.Button(bf, text=' ENTER ', bg='green', font=('Arial', 15), relief='raised', borderwidth=5,
+                              command=check_password)
+        enter_btn.pack(side='left')
+
+        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
+        bottom_frame.pack(fill='x', side='bottom')
+
+        visa_photo = tk.PhotoImage(file='visa.png')
+        visa_label = tk.Label(bottom_frame, image=visa_photo)
+        visa_label.pack(side='left')
+        visa_label.image = visa_photo
+
+        mastercard_photo = tk.PhotoImage(file='mastercard.png')
+        mastercard_label = tk.Label(bottom_frame, image=mastercard_photo)
+        mastercard_label.pack(side='left')
+        mastercard_label.image = mastercard_photo
+
+        def tick():
+            current_time = time.strftime('%I:%M %p').lstrip('0').replace(' 0', ' ')
+            time_label.config(text=current_time)
+            time_label.after(200, tick)
+
+        time_label = tk.Label(bottom_frame, font=('Arial', 12))
+        time_label.pack(side='right')
+
+        tick()
+
+
+class MenuPage(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg='#9999ff')
+        self.controller = controller
+
+        heading_label = tk.Label(self,
+                                 text='БАНКОМАТ',
+                                 font=('Arial', 45, 'bold'),
+                                 foreground='#ffffff',
+                                 background='#9999ff')
+        heading_label.pack(pady=25)
+
+        main_menu_label = tk.Label(self,
+                                   text='Главное меню',
+                                   font=('Arial', 13),
+                                   fg='white',
+                                   bg='#9999ff')
+        main_menu_label.pack()
+
+        selection_label = tk.Label(self,
+                                   text='Пожалуйста сделайте выбор',
+                                   font=('Arial', 13),
+                                   fg='white',
+                                   bg='#9999ff',
+                                   anchor='w')
+        selection_label.pack(fill='x')
+
+        button_frame = tk.Frame(self, bg='#33334d')
+        button_frame.pack(fill='both', expand=True)
+
+        def withdraw():
+            controller.show_frame('WithdrawPage')
+
+        withdraw_button = tk.Button(button_frame,
+                                    text='Снять деньги',
+                                    font=('Arial', 11),
+                                    command=withdraw,
+                                    relief='raised',
+                                    borderwidth=3,
+                                    width=50,
+                                    height=5)
+        withdraw_button.pack(pady=10)
+
+        def deposit():
+            controller.show_frame('DepositPage')
+
+        deposit_button = tk.Button(button_frame,
+                                   text='Внести деньги',
+                                   font=('Arial', 11),
+                                   command=deposit,
+                                   relief='raised',
+                                   borderwidth=3,
+                                   width=50,
+                                   height=5)
+        deposit_button.pack()
+
+        def balance():
+            controller.show_frame('BalancePage')
+
+        balance_button = tk.Button(button_frame,
+                                   text='Запросить баланс',
+                                   font=('Arial', 11),
+                                   command=balance,
+                                   relief='raised',
+                                   borderwidth=3,
+                                   width=50,
+                                   height=5)
+        balance_button.pack(pady=10)
+
+        def exit():
+            controller.show_frame('StartPage')
+
+        exit_button = tk.Button(button_frame,
+                                text='Выйти',
+                                font=('Arial', 11),
+                                command=exit,
+                                relief='raised',
+                                borderwidth=3,
+                                width=50,
+                                height=5)
+        exit_button.pack()
+
+        def card():
+            controller.show_frame('Card_Output')
+
+        card_button = tk.Button(button_frame,
+                                text='Вернуть карту',
+                                font=('Arial', 11),
+                                command=card,
+                                relief='raised',
+                                borderwidth=3,
+                                width=50,
+                                height=5)
+        card_button.pack(pady=10)
+
+        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
+        bottom_frame.pack(fill='x', side='bottom')
+
+        visa_photo = tk.PhotoImage(file='visa.png')
+        visa_label = tk.Label(bottom_frame, image=visa_photo)
+        visa_label.pack(side='left')
+        visa_label.image = visa_photo
+
+        mastercard_photo = tk.PhotoImage(file='mastercard.png')
+        mastercard_label = tk.Label(bottom_frame, image=mastercard_photo)
+        mastercard_label.pack(side='left')
+        mastercard_label.image = mastercard_photo
+
+        def tick():
+            current_time = time.strftime('%I:%M %p').lstrip('0').replace(' 0', ' ')
+            time_label.config(text=current_time)
+            time_label.after(200, tick)
+
+        time_label = tk.Label(bottom_frame, font=('Arial', 12))
+        time_label.pack(side='right')
+
+        tick()
+
+
+class WithdrawPage(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg='#9999ff')
+        self.controller = controller
+
+        heading_label = tk.Label(self,
+                                 text='Банкомат',
+                                 font=('Arial', 45, 'bold'),
+                                 foreground='#ffffff',
+                                 background='#9999ff')
+        heading_label.pack(pady=25)
+
+        choose_amount_label = tk.Label(self,
+                                       text='Выберите сумму списания',
+                                       font=('Arial', 13),
+                                       fg='white',
+                                       bg='#9999ff')
+        choose_amount_label.pack()
+
+        button_frame = tk.Frame(self, bg='#33334d')
+        button_frame.pack(fill='both', expand=True)
+
+        def withdraw(amount):
+            global current_balance
+            if current_balance - amount >= 0:
+                current_balance -= amount
+                controller.shared_data['Balance'].set(current_balance)
+                controller.show_frame('MenuPage')
+            elif current_balance - amount < 0:
+                controller.show_frame('Lack')
+
+        def other_amount():
+            controller.show_frame('WithdrawPageSam')
+
+        twenty_button = tk.Button(button_frame,
+                                  text='20',
+                                  font=('Arial', 11),
+                                  command=lambda: withdraw(20),
+                                  relief='raised',
+                                  borderwidth=3,
+                                  width=50,
+                                  height=5)
+        twenty_button.grid(row=0, column=0, pady=5)
+
+        forty_button = tk.Button(button_frame,
+                                 text='40',
+                                 font=('Arial', 11),
+                                 command=lambda: withdraw(40),
+                                 relief='raised',
+                                 borderwidth=3,
+                                 width=50,
+                                 height=5)
+        forty_button.grid(row=1, column=0, pady=5)
+
+        sixty_button = tk.Button(button_frame,
+                                 text='60',
+                                 font=('Arial', 11),
+                                 command=lambda: withdraw(60),
+                                 relief='raised',
+                                 borderwidth=3,
+                                 width=50,
+                                 height=5)
+        sixty_button.grid(row=2, column=0, pady=5)
+
+        eighty_button = tk.Button(button_frame,
+                                  text='80',
+                                  font=('Arial', 11),
+                                  command=lambda: withdraw(80),
+                                  relief='raised',
+                                  borderwidth=3,
+                                  width=50,
+                                  height=5)
+        eighty_button.grid(row=3, column=0, pady=5)
+
+        one_hundred_button = tk.Button(button_frame,
+                                       text='100',
+                                       font=('Arial', 11),
+                                       command=lambda: withdraw(100),
+                                       relief='raised',
+                                       borderwidth=3,
+                                       width=50,
+                                       height=5)
+        one_hundred_button.grid(row=0, column=1, pady=5, padx=555)
+
+        two_hundred_button = tk.Button(button_frame,
+                                       text='200',
+                                       font=('Arial', 11),
+                                       command=lambda: withdraw(200),
+                                       relief='raised',
+                                       borderwidth=3,
+                                       width=50,
+                                       height=5)
+        two_hundred_button.grid(row=1, column=1, pady=5)
+
+        three_hundred_button = tk.Button(button_frame,
+                                         text='300',
+                                         font=('Arial', 11),
+                                         command=lambda: withdraw(300),
+                                         relief='raised',
+                                         borderwidth=3,
+                                         width=50,
+                                         height=5)
+        three_hundred_button.grid(row=2, column=1, pady=5)
+
+        five_hundred_button = tk.Button(button_frame,
+                                        text='500',
+                                        font=('Arial', 11),
+                                        command=lambda: withdraw(500),
+                                        relief='raised',
+                                        borderwidth=3,
+                                        width=50,
+                                        height=5)
+        five_hundred_button.grid(row=3, column=1, pady=5)
+
+        menu_button = tk.Button(button_frame,
+                                text='Вернуться в Меню',
+                                font=('Arial', 11),
+                                command=lambda: withdraw(0),
+                                relief='raised',
+                                borderwidth=3,
+                                width=50,
+                                height=5)
+        menu_button.grid(row=4, column=0, pady=5)
+
+        other_amount_button = tk.Button(button_frame,
+                                        text='Ввести сумму самостоятельно',
+                                        font=('Arial', 11),
+                                        command=other_amount,
+                                        relief='raised',
+                                        borderwidth=3,
+                                        width=50,
+                                        height=5)
+        other_amount_button.grid(row=4, column=1, pady=5)
+
+        '''cash = tk.StringVar()
+        other_amount_entry = tk.Entry(button_frame,
+                                      textvariable=cash,
+                                      width=59,
+                                      justify='right')
+
+        # other_amount_entry.grid(row=3, column=1, pady=5, ipady=30)
+
+        def other_amount(_):
+            global current_balance
+            if cash.get().isdigit():
+                if current_balance - int(cash.get()) >= 0:
+                    current_balance -= int(cash.get())
+                    controller.shared_data['Balance'].set(current_balance)
+                    cash.set('')
+                    controller.show_frame('MenuPage')
+                elif current_balance - int(cash.get()) < 0:
+                    controller.show_frame('Lack')
+                    cash.set('')
+
+        other_amount_entry.bind('<Return>', other_amount)'''
+
+        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
+        bottom_frame.pack(fill='x', side='bottom')
+
+        visa_photo = tk.PhotoImage(file='visa.png')
+        visa_label = tk.Label(bottom_frame, image=visa_photo)
+        visa_label.pack(side='left')
+        visa_label.image = visa_photo
+
+        mastercard_photo = tk.PhotoImage(file='mastercard.png')
+        mastercard_label = tk.Label(bottom_frame, image=mastercard_photo)
+        mastercard_label.pack(side='left')
+        mastercard_label.image = mastercard_photo
+
+        def tick():
+            current_time = time.strftime('%I:%M %p').lstrip('0').replace(' 0', ' ')
+            time_label.config(text=current_time)
+            time_label.after(200, tick)
+
+        time_label = tk.Label(bottom_frame, font=('Arial', 12))
+        time_label.pack(side='right')
+
+        tick()
+
+
+class DepositPage(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg='#9999ff')
+        self.controller = controller
+
+        heading_label = tk.Label(self,
+                                 text='Банкомат',
+                                 font=('Arial', 45, 'bold'),
+                                 foreground='#ffffff',
+                                 background='#9999ff')
+        heading_label.pack(pady=30)
+
+        space_label = tk.Label(self, height=5, bg='#9999ff')
+        space_label.pack()
+
+        password_label = tk.Label(self,
+                                  text='Введите сумму вклада',
+                                  font=('Arial', 15),
+                                  bg='#9999ff',
+                                  fg='white')
+        password_label.pack(pady=10)
+
+        my_password = tk.StringVar()
+        password_entry_box = tk.Entry(self,
+                                      textvariable=my_password,
+                                      font=('Arial', 15),
+                                      width=22)
+        password_entry_box.focus_set()
+        password_entry_box.pack(ipady=7)
+
+        def check_password():
+            global current_balance
+            if my_password.get().isdigit():
+                if current_balance + int(my_password.get()) >= 0:
+                    current_balance += int(my_password.get())
+                    controller.shared_data['Balance'].set(current_balance)
+                    my_password.set('')
+                    controller.show_frame('MenuPage')
+                    my_password.set('')
+                    incorrect_password_label['text'] = ''
+            elif my_password.get() == '':
+                incorrect_password_label['text'] = 'Введите пожалуйста сумму, прежде чем нажимать на ENTER'
+            else:
+                incorrect_password_label['text'] = 'Неверная сумма, попробуйте еще раз'
+
+        def clear():
+            incorrect_password_label['text'] = ''
+            password_entry_box.delete(len(password_entry_box.get()) - 1)
+
+        enter = tk.Label(self,
+                         text='',
+                         width=40,
+                         height=3,
+                         bg='#9999ff')
+        enter.pack(pady=10)
+
+        incorrect_password_label = tk.Label(self,
+                                            text='',
+                                            font=('Arial', 13),
+                                            fg='white',
+                                            bg='#33334d',
+                                            anchor='n')
+        incorrect_password_label.pack(fill='both', expand=True)
+
+        incorrect_password_label1 = tk.Label(self,
+                                             font=('Arial', 13),
+                                             fg='white',
+                                             bg='#33334d',
+                                             anchor='n')
+        incorrect_password_label1.pack(fill='both', expand=True)
+
+        bf = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf.pack(side='bottom')
+
+        bf4 = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf4.pack(side='bottom')
+
+        bf3 = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf3.pack(side='bottom')
+
+        bf2 = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf2.pack(side='bottom')
+
+        bf1 = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf1.pack(side='bottom')
+
+        b1 = tk.Button(bf1, text='  1  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '1'))
+        b1.pack(side='left', pady=10)
+        b2 = tk.Button(bf1, text='  2  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '2'))
+        b2.pack(side='left', padx=10)
+        b3 = tk.Button(bf1, text='  3  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '3'))
+        b3.pack(side='left')
+
+        b4 = tk.Button(bf2, text='  4  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '4'))
+        b4.pack(side='left', pady=10)
+        b5 = tk.Button(bf2, text='  5  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '5'))
+        b5.pack(side='left', padx=10)
+        b6 = tk.Button(bf2, text='  6  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '6'))
+        b6.pack(side='left')
+
+        b7 = tk.Button(bf3, text='  7  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '7'))
+        b7.pack(side='left', pady=10)
+        b8 = tk.Button(bf3, text='  8  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '8'))
+        b8.pack(side='left', padx=10)
+        b9 = tk.Button(bf3, text='  9  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '9'))
+        b9.pack(side='left')
+
+        b = tk.Button(bf4, text='      ', font=('Arial', 15), relief='raised', borderwidth=5)
+        b.pack(side='left', pady=10)
+        b0 = tk.Button(bf4, text='  0  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '0'))
+        b0.pack(side='left', padx=10)
+        b = tk.Button(bf4, text='000', font=('Arial', 15), relief='raised', borderwidth=5,
+                      command=lambda: password_entry_box.insert('end', '000'))
+        b.pack(side='left')
+
+        def cancel():
+            controller.show_frame('MenuPage')
+
+        cancel_btn = tk.Button(bf, text='MENU', bg='red', font=('Arial', 15), relief='raised', borderwidth=5,
+                               command=cancel)
+        cancel_btn.pack(side='left', padx=10)
+        clear_btn = tk.Button(bf, text='CLEAR ', bg='yellow', font=('Arial', 15), relief='raised', borderwidth=5,
+                              command=clear)
+        clear_btn.pack(side='left', padx=10)
+        enter_btn = tk.Button(bf, text=' ENTER ', bg='green', font=('Arial', 15), relief='raised', borderwidth=5,
+                              command=check_password)
+        enter_btn.pack(side='left')
+
+        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
+        bottom_frame.pack(fill='x', side='bottom')
+
+        visa_photo = tk.PhotoImage(file='visa.png')
+        visa_label = tk.Label(bottom_frame, image=visa_photo)
+        visa_label.pack(side='left')
+        visa_label.image = visa_photo
+
+        mastercard_photo = tk.PhotoImage(file='mastercard.png')
+        mastercard_label = tk.Label(bottom_frame, image=mastercard_photo)
+        mastercard_label.pack(side='left')
+        mastercard_label.image = mastercard_photo
+
+        def tick():
+            current_time = time.strftime('%I:%M %p').lstrip('0').replace(' 0', ' ')
+            time_label.config(text=current_time)
+            time_label.after(200, tick)
+
+        time_label = tk.Label(bottom_frame, font=('Arial', 12))
+        time_label.pack(side='right')
+
+        tick()
+
+
+class BalancePage(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg='#9999ff')
+        self.controller = controller
+
+        heading_label = tk.Label(self,
+                                 text='Банкомат',
+                                 font=('Arial', 45, 'bold'),
+                                 foreground='#ffffff',
+                                 background='#9999ff')
+        heading_label.pack(pady=25)
+
+        balance_label = tk.Label(self, text='Баланс:',
+                                 font=('Arial', 15),
+                                 fg='white',
+                                 bg='#9999ff',
+                                 anchor='w',
+                                 )
+        balance_label.pack()
+
+        global current_balance
+        controller.shared_data['Balance'].set(current_balance)
+        balance_label = tk.Label(self,
+                                 textvariable=controller.shared_data['Balance'],
+                                 font=('Arial', 13),
+                                 fg='white',
+                                 bg='#9999ff',
+                                 anchor='w',
+                                 )
+        balance_label.pack()
+
+        button_frame = tk.Frame(self, bg='#33334d')
+        button_frame.pack(fill='both', expand=True)
+
+        def menu():
+            controller.show_frame('MenuPage')
+
+        menu_button = tk.Button(button_frame,
+                                command=menu,
+                                text='Вернуться в меню',
+                                font=('Arial', 11),
+                                relief='raised',
+                                borderwidth=3,
+                                width=50,
+                                height=5)
+        menu_button.pack(pady=10)
+
+        def exit():
+            controller.show_frame('StartPage')
+
+        exit_button = tk.Button(button_frame,
+                                text='Выйти',
+                                font=('Arial', 11),
+                                command=exit,
+                                relief='raised',
+                                borderwidth=3,
+                                width=50,
+                                height=5)
+        exit_button.pack()
+
+        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
+        bottom_frame.pack(fill='x', side='bottom')
+
+        visa_photo = tk.PhotoImage(file='visa.png')
+        visa_label = tk.Label(bottom_frame, image=visa_photo)
+        visa_label.pack(side='left')
+        visa_label.image = visa_photo
+
+        mastercard_photo = tk.PhotoImage(file='mastercard.png')
+        mastercard_label = tk.Label(bottom_frame, image=mastercard_photo)
+        mastercard_label.pack(side='left')
+        mastercard_label.image = mastercard_photo
+
+        def tick():
+            current_time = time.strftime('%I:%M %p').lstrip('0').replace(' 0', ' ')
+            time_label.config(text=current_time)
+            time_label.after(200, tick)
+
+        time_label = tk.Label(bottom_frame, font=('orbitron', 12))
+        time_label.pack(side='right')
+
+        tick()
+
+
+class Lack(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg='#9999ff')
+        self.controller = controller
+
+        heading_label = tk.Label(self,
+                                 text='Банкомат',
+                                 font=('Arial', 45, 'bold'),
+                                 foreground='#ffffff',
+                                 background='#9999ff')
+        heading_label.pack(pady=25)
+
+        balance_label = tk.Label(self, text='Недостаточно средств на балансе. \n На балансе:',
+                                 font=('Arial', 15),
+                                 fg='white',
+                                 bg='#9999ff',
+                                 anchor='w',
+                                 )
+        balance_label.pack()
+
+        global current_balance
+        controller.shared_data['Balance'].set(current_balance)
+        balance_label = tk.Label(self,
+                                 textvariable=controller.shared_data['Balance'],
+                                 font=('Arial', 13),
+                                 fg='white',
+                                 bg='#9999ff',
+                                 anchor='w',
+                                 )
+        balance_label.pack()
+
+        selection_label = tk.Label(self,
+                                   text='Пожалуйста сделайте выбор',
+                                   font=('Arial', 13),
+                                   fg='white',
+                                   bg='#9999ff',
+                                   anchor='w')
+        selection_label.pack(fill='x')
+
+        button_frame = tk.Frame(self, bg='#33334d')
+        button_frame.pack(fill='both', expand=True)
+
+        def deposit():
+            controller.show_frame('DepositPage')
+
+        deposit_button = tk.Button(button_frame,
+                                   command=deposit,
+                                   text='Внести деньги',
+                                   relief='raised',
+                                   font=('Arial', 13),
+                                   borderwidth=3,
+                                   width=50,
+                                   height=5)
+        deposit_button.pack()
+
+        def menu():
+            controller.show_frame('MenuPage')
+
+        menu_button = tk.Button(button_frame,
+                                command=menu,
+                                text='Вернуться в меню',
+                                relief='raised',
+                                font=('Arial', 13),
+                                borderwidth=3,
+                                width=50,
+                                height=5)
+        menu_button.pack(pady=10)
+
+        def exit():
+            controller.show_frame('StartPage')
+
+        exit_button = tk.Button(button_frame,
+                                text='Выйти',
+                                command=exit,
+                                font=('Arial', 13),
+                                relief='raised',
+                                borderwidth=3,
+                                width=50,
+                                height=5)
+        exit_button.pack()
+
+        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
+        bottom_frame.pack(fill='x', side='bottom')
+
+        visa_photo = tk.PhotoImage(file='visa.png')
+        visa_label = tk.Label(bottom_frame, image=visa_photo)
+        visa_label.pack(side='left')
+        visa_label.image = visa_photo
+
+        mastercard_photo = tk.PhotoImage(file='mastercard.png')
+        mastercard_label = tk.Label(bottom_frame, image=mastercard_photo)
+        mastercard_label.pack(side='left')
+        mastercard_label.image = mastercard_photo
+
+        def tick():
+            current_time = time.strftime('%I:%M %p').lstrip('0').replace(' 0', ' ')
+            time_label.config(text=current_time)
+            time_label.after(200, tick)
+
+        time_label = tk.Label(bottom_frame, font=('orbitron', 12))
+        time_label.pack(side='right')
+
+        tick()
+
+
+class WithdrawPageSam(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, bg='#9999ff')
+        self.controller = controller
+
+        heading_label = tk.Label(self,
+                                 text='Банкомат',
+                                 font=('Arial', 45, 'bold'),
+                                 foreground='#ffffff',
+                                 background='#9999ff')
+        heading_label.pack(pady=30)
+
+        space_label = tk.Label(self, height=5, bg='#9999ff')
+        space_label.pack()
+
+        password_label = tk.Label(self,
+                                  text='Введите сумму списания',
+                                  font=('Arial', 15),
+                                  bg='#9999ff',
+                                  fg='white')
+        password_label.pack(pady=10)
+
+        my_password = tk.StringVar()
+        password_entry_box = tk.Entry(self,
+                                      textvariable=my_password,
+                                      font=('Arial', 15),
+                                      width=22)
+        password_entry_box.focus_set()
+        password_entry_box.pack(ipady=7)
+
+        def check_password():
+            global current_balance
+            if my_password.get().isdigit():
+                if current_balance - int(my_password.get()) >= 0:
+                    current_balance -= int(my_password.get())
+                    controller.shared_data['Balance'].set(current_balance)
+                    my_password.set('')
+                    controller.show_frame('MenuPage')
+                    my_password.set('')
+                    incorrect_password_label['text'] = ''
+                elif current_balance - int(my_password.get()) < 0:
+                    controller.show_frame('Lack')
+                    my_password.set('')
+            elif my_password.get() == '':
+                incorrect_password_label['text'] = 'Введите пожалуйста сумму, прежде чем нажимать на ENTER'
+            else:
+                incorrect_password_label['text'] = 'Неверная сумма, попробуйте еще раз'
+
+        def clear():
+            incorrect_password_label['text'] = ''
+            password_entry_box.delete(len(password_entry_box.get()) - 1)
+
+        enter = tk.Label(self,
+                         text='',
+                         width=40,
+                         height=3,
+                         bg='#9999ff')
+        enter.pack(pady=10)
+
+        incorrect_password_label = tk.Label(self,
+                                            text='',
+                                            font=('Arial', 13),
+                                            fg='white',
+                                            bg='#33334d',
+                                            anchor='n')
+        incorrect_password_label.pack(fill='both', expand=True)
+
+        incorrect_password_label1 = tk.Label(self,
+                                             font=('Arial', 13),
+                                             fg='white',
+                                             bg='#33334d',
+                                             anchor='n')
+        incorrect_password_label1.pack(fill='both', expand=True)
+
+        bf = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf.pack(side='bottom')
+
+        bf4 = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf4.pack(side='bottom')
+
+        bf3 = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf3.pack(side='bottom')
+
+        bf2 = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf2.pack(side='bottom')
+
+        bf1 = tk.Frame(incorrect_password_label1, bg='#33334d')
+        bf1.pack(side='bottom')
+
+        b1 = tk.Button(bf1, text='  1  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '1'))
+        b1.pack(side='left', pady=10)
+        b2 = tk.Button(bf1, text='  2  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '2'))
+        b2.pack(side='left', padx=10)
+        b3 = tk.Button(bf1, text='  3  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '3'))
+        b3.pack(side='left')
+
+        b4 = tk.Button(bf2, text='  4  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '4'))
+        b4.pack(side='left', pady=10)
+        b5 = tk.Button(bf2, text='  5  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '5'))
+        b5.pack(side='left', padx=10)
+        b6 = tk.Button(bf2, text='  6  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '6'))
+        b6.pack(side='left')
+
+        b7 = tk.Button(bf3, text='  7  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '7'))
+        b7.pack(side='left', pady=10)
+        b8 = tk.Button(bf3, text='  8  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '8'))
+        b8.pack(side='left', padx=10)
+        b9 = tk.Button(bf3, text='  9  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '9'))
+        b9.pack(side='left')
+
+        b = tk.Button(bf4, text='      ', font=('Arial', 15), relief='raised', borderwidth=5)
+        b.pack(side='left', pady=10)
+        b0 = tk.Button(bf4, text='  0  ', font=('Arial', 15), relief='raised', borderwidth=5,
+                       command=lambda: password_entry_box.insert('end', '0'))
+        b0.pack(side='left', padx=10)
+        b = tk.Button(bf4, text='000', font=('Arial', 15), relief='raised', borderwidth=5,
+                      command=lambda: password_entry_box.insert('end', '000'))
+        b.pack(side='left')
+
+        def cancel():
+            controller.show_frame('MenuPage')
+
+        cancel_btn = tk.Button(bf, text='MENU', bg='red', font=('Arial', 15), relief='raised', borderwidth=5,
+                               command=cancel)
+        cancel_btn.pack(side='left', padx=10)
+        clear_btn = tk.Button(bf, text='CLEAR ', bg='yellow', font=('Arial', 15), relief='raised', borderwidth=5,
+                              command=clear)
+        clear_btn.pack(side='left', padx=10)
+        enter_btn = tk.Button(bf, text=' ENTER ', bg='green', font=('Arial', 15), relief='raised', borderwidth=5,
+                              command=check_password)
+        enter_btn.pack(side='left')
+
+        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
+        bottom_frame.pack(fill='x', side='bottom')
+
+        visa_photo = tk.PhotoImage(file='visa.png')
+        visa_label = tk.Label(bottom_frame, image=visa_photo)
+        visa_label.pack(side='left')
+        visa_label.image = visa_photo
+
+        mastercard_photo = tk.PhotoImage(file='mastercard.png')
+        mastercard_label = tk.Label(bottom_frame, image=mastercard_photo)
+        mastercard_label.pack(side='left')
+        mastercard_label.image = mastercard_photo
+
+        def tick():
+            current_time = time.strftime('%I:%M %p').lstrip('0').replace(' 0', ' ')
+            time_label.config(text=current_time)
+            time_label.after(200, tick)
+
+        time_label = tk.Label(bottom_frame, font=('Arial', 12))
+        time_label.pack(side='right')
+
+        tick()
+
+
+class FinalPage(tk.Frame):
+    def __init__(self, parent, controller):
+        """
+
+        :param parent:
+        :param controller:
+        """
+        tk.Frame.__init__(self, parent, bg='#9999ff')
+        self.controller = controller
+
+        heading_label = tk.Label(self,
+                                 text='Банкомат',
+                                 font=('Arial', 45, 'bold'),
+                                 foreground='#ffffff',
+                                 background='#9999ff')
+        heading_label.pack(pady=30)
+
+        space_label = tk.Label(self, height=5, bg='#9999ff')
+        space_label.pack()
+
+        def activate():
+            controller.show_frame('Card_Reception')
+
+        activate_button = tk.Label(self,
+                                   text='Это было классно, досвидания',
+                                   font=('Arial', 45, 'bold'),
+                                   bg='#9999ff',
+                                   borderwidth=5,
+                                   width=40,
+                                   height=3,
+                                   foreground='white')
+        activate_button.pack(pady=10)
+
+        incorrect_password_label = tk.Label(self,
+                                            text='',
+                                            font=('Arial', 13),
+                                            fg='white',
+                                            bg='#33334d',
+                                            anchor='n')
+        incorrect_password_label.pack(fill='both', expand=True)
+
+        bottom_frame = tk.Frame(self, relief='raised', borderwidth=3)
+        bottom_frame.pack(fill='x', side='bottom')
+
+        visa_photo = tk.PhotoImage(file='visa.png')
+        visa_label = tk.Label(bottom_frame, image=visa_photo)
+        visa_label.pack(side='left')
+        visa_label.image = visa_photo
+
+        mastercard_photo = tk.PhotoImage(file='mastercard.png')
+        mastercard_label = tk.Label(bottom_frame, image=mastercard_photo)
+        mastercard_label.pack(side='left')
+        mastercard_label.image = mastercard_photo
+
+        def tick():
+            current_time = time.strftime('%I:%M %p').lstrip('0').replace(' 0', ' ')
+            time_label.config(text=current_time)
+            time_label.after(200, tick)
+
+        time_label = tk.Label(bottom_frame, font=('Arial', 12))
+        time_label.pack(side='right')
+
+        tick()
+
+
+if __name__ == "__main__":
+    app = SampleApp()
+    app.mainloop()
